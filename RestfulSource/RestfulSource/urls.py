@@ -18,5 +18,5 @@ from django.conf.urls import url
 from api import views
 urlpatterns = [
     url(r'admin/', admin.site.urls),
-    url(r'users/', views.UserIndex.as_view()),
+    url(r'(?P<version>\w+)/users/', views.UserIndex.as_view(),name='xx'),
 ]

@@ -1,0 +1,46 @@
+参考博客:
+    http://www.cnblogs.com/wupeiqi/articles/7805382.html
+
+request的请求的生命周期
+    1、wsgi/uwsgi
+    2、中间件
+    3、路由系统
+        CBV/FBV 基于函数/类的视图(basic function/class views)
+    4、dispatch
+        封装request
+        try:
+            处理版本
+            权限
+            节流
+
+        execEpt:
+            处理错误信息
+        self.finalize_response 返回最后的response
+# ----------- restful version -----------#
+
+视图自定义版本
+from rest_framework.versioning import URLPathVersioning
+点进去：versioning
+versioning_class = URLPathVersioning
+versioning_class 是APIView的静态字段
+以上适用于试图较少的场景，如果视图很多，那么每个视图都要去应用，比较麻烦，所以我们在全局应用
+这样，在views视图内不用在重复写和导入了
+
+# 全局配置版本信息
+REST_FRAMEWORK = {
+    "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.URLPathVersioning",  # 全局配置并采取哪种默认方式
+    "VERSION_PARAM": "version",  # 参数，这个version要是改掉，其他的都要改
+    "DEFAULT_VERSION": "v1",   # 默认版本
+    "ALLOWED_VERSIONS": ['v1', 'v2'],  # 允许那些版本通过，可以不写
+}
+
+
+
+# ----------- restful version -----------#
+# ----------- restful version -----------#
+# ----------- restful version -----------#
+# ----------- restful version -----------#
+# ----------- restful version -----------#
+# ----------- restful version -----------#
+# ----------- restful version -----------#
+# ----------- restful version -----------#

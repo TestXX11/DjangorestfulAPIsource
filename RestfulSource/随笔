@@ -16,6 +16,7 @@ request的请求的生命周期
         execEpt:
             处理错误信息
         self.finalize_response 返回最后的response
+
 # ----------- restful version -----------#
 
 视图自定义版本
@@ -36,11 +37,229 @@ REST_FRAMEWORK = {
 
 
 
+# ----------- restful authentication -----------#
+默认匿名用户的提示
+from django.contrib.auth.models import AnonymousUser
+
+
+局部应用，在引用类中写
+# from rest_framework.authentication import SessionAuthentication
+authentication_classes = [CustomAuthentication]
+然后，自定义# class CustomAuthentication(SessionAuthentication):
+并实现相对应的方法
+
+
+全局引用
+注意，在全局引用的时候，路经不能写api.views.CustomAuthentication,这样写应该是关键字冲突，导致运行报错
+但是放到api下面的其他的文件夹没问题
+"DEFAULT_AUTHENTICATION_CLASSES": [
+        "api.dabo.bo.CustomAuthentication", # 在这里可以写多个认证类，写上路经
+    ],
+视图类无需写，只要实现api.dabo.bo.CustomAuthentication的方法
+
+
+
+
+# ----------- restful permission -----------#
+
+自定义的权限类，需继承BasePermission
+from rest_framework.permissions import BasePermission
+然后实现has_permissions方法，在此方法内实现自定义权限逻辑
+有权限的话，就返回True,反之就返回False
+想要自定义错误信息，添加上message字段
+message = '无权限访问'  # 自定义错误信息
+在需要权限的类中，添加这个类
+permission_classes = [MyPermissions]
+全局引用的话在settings中：
+REST_FRAMEWORK = {
+    # 全局权限应用
+    # "DEFAULT_PERMISSION_CLASSES": [
+    #     "api.dabo.mypermission.MyPermission",  # 写上路径
+    # ]
+
+
+}
+
+
+
+
+# ----------- restful throttle -----------#
+
+from rest_framework.throttling import BaseThrottle
+注意在settings里面写配置时，注意是：DEFAULT_THROTTLE_RATES（throttling.py里面），而不是DEFAULT_THROTTLE_CLASSES(APIView的静态字段)
+
+scope = 'anon' 的anon是可以写成别的，只要跟settings一致就好
+
+
+
+# ----------- restful serializer 序列化 -----------#
+from rest_framework import serializers
+序列化功能：
+    序列化(这三种写法，在views里)
+        serializers.Serializer
+        serializers.ModelSerializer
+        serializers.HyperlinkedModelSerializer
+    验证
+        if src.is_valid():
+        # print(src.validated_data)
+        return Response(src.validated_data)
+
+
+
+# 手动挡，推荐也就是继承serializers.Serializer
+能手动写的都手动写
+
+# 自动挡，不推荐
+当继承serializers.ModelSerializer时
+url(r'(?P<version>\w+)/users\.(?P<format>\w+)', views.UserIndex.as_view(), name='xx'),
+表示，在地址栏可以支持http://127.0.0.1:8881/v2/users.json
+反向生成url, view_name='xxxxxa'
+需要注意，
+class MySerializer(serializers.ModelSerializer):
+    ug = serializers.HyperlinkedIdentityField(view_name='xxxxxa')  # 反向生成url，需要配合urls配合
+    class Meta:
+        model = models.UserInfo
+        fields = "__all__"
+    url(r'(?P<version>\w+)/users\.(?P<format>\w+)', views.UserIndex.as_view(), name='xx'),   通过这个url，生成下面的url
+    url(r'(?P<version>\w+)/ug/(?P<pk>\d+)', views.UserIndex.as_view(), name='xxxxxa'),
+
+    class Meta:
+        自定义规则
+        extra_kwargs = {
+            'user': {'min_length': 6},
+            'pwd': {'validators': [Validation('6666')]}
+        }
+        depth = 2  如果有FK等跨表查询的时候，代表可以深入查找几级，最大是十级
+# 继承serializers.HyperlinkedModelSerializer
+class MySerializer(serializers.HyperlinkedModelSerializer):
+    """
+    serializers.HyperlinkedModelSerializer:
+        这玩意儿主要是就是帮我们生成一个url字段
+        fields = ['id', 'user', 'pwd', 'url']
+
+        {
+            "id": 1,
+            "user": "egon",
+            "pwd": "123",
+            "url": "http://127.0.0.1:8881/v2/users/1"
+        }
+    """
+    class Meta:
+        model = models.UserInfo
+        fields = ['id', 'user', 'pwd', 'url']
+
+注意：
+    在urls.py里，想要http://127.0.0.1:8881/v2/users.json
+    关键字必须是format，因为源码里只认这个关键字
+    url(r'(?P<version>\w+)/users\.(?P<format>\w+)', views.UserIndex.as_view(), name='xx'),
+    可以print(kwargs) >>> {'format': 'json'}
+
+# ----------- restful 分页 -----------#
+from rest_framework.pagination import LimitOffsetPagination,CursorPagination,PageNumberPagination
+按个数
+    LimitOffsetPagination
+    /users?page=1&page_zise=10   # 第几页，多少条
+按位置
+    PageNumberPagination
+    limit
+    offset
+    /users?offset=100&limit=10   # 这也是从开始往查，一条条的差，不如下面的
+游标分页
+    CursorPagination
+    拿到最大最小id
+    select * from td offset where id>10000000 offset 0 limit 10   # 从10000000开始往后取十条，之前的不查
+
+
+
+# ----------- restful 路由 -----------#
+手动挡：APIView
+    主要变化在urls.py
+    url(r'(?P<version>\w+)/users/$', views.UserIndex.as_view(), name='xx'),
+#             url(r'(?P<version>\w+)/users\.(?P<format>\w+)/$', views.UserIndex.as_view(), name='xx'),
+#             url(r'(?P<version>\w+)/users/(?P<pk>\d+)/$', views.UserIndex.as_view(), name='xxa'),
+#             url(r'(?P<version>\w+)/users\.(?P<format>\w+)/(?P<pk>\d+)/$', views.UserIndex.as_view(), name='xx'),
+半手动：GenericAPIView
+具体体现在视图处理这块，帮我们做减少了一点代码量，然并卵
+
+半自动：GenericViewSet
+需要urls.py配合，不同的请求方式对应不同的方法
+必须手动实现相应的方法和功能代码
+#         get: list  # 查看所有的
+#         get: retrieve # 这是查看一个对象
+#         post: create
+#         put: update
+#         delete: destroy
+urlpatterns = [
+#             url(r'admin/', admin.site.urls),
+#             # 半自动
+#             url(r'(?P<version>\w+)/users/$', views.UserIndex.as_view({'get': 'list', 'post': 'create'}), name='xx'),
+#             url(r'(?P<version>\w+)/users/(?P<pk>\d+)/$', views.UserIndex.as_view({'get': 'retrieve', 'put': 'update', 'delete': 'destroy'}), name='xxa'),
+#
+#         ]
+
+
+全自动： ModelViewSet
+这就厉害了，10行代码，完成增删改查
+如果用全自动的，首先，urls必须导入defaultrouter类，并实例化对象
+        from django.conf.urls import url,include
+        from api import views
+        # 1 引入类
+        from rest_framework.routers import DefaultRouter
+        # 2 实例化对象
+        route = DefaultRouter()
+        # 3 调用register方法
+        route.register('user',views.UserIndex)
+
+        urlpatterns = [
+            # 自动挡
+            url(r'^(?P<version>\w+)/', include(route.urls))
+            # 不用版本的话，可以把版本的去掉
+            # url(r'^', include(route.urls))
+        ]
+    然后，自己实现序列化
+    视图类继承 ModelViewSet
+    from rest_framework.viewsets import ModelViewSet
+
+最后，说下这个继承关系
+ModelViewSet的继承关系
+
+                        View
+
+                      APIView
+
+ViewSetMixin      GenericAPIView
+
+        GenericViewSet              CreateModelMixin,RetrieveModelMixin,UpdateModelMixin,DestroyModelMixin,ListModelMixin,
+
+         ModelViewSet
+
+          UserIndex
+
+
+
+
+
+# ----------- restful 渲染 -----------#
+注意：
+    HTMLFormRenderer 在对象是列表的时候，不能用，也就是说，只能取单个对象才能用，不然，回报不可迭代的错误
+    http://127.0.0.1:8881/v2/users.form
+    renderer_classes = [HTMLFormRenderer]
+    def get(self, request, *args, **kwargs):
+        user_list = models.UserInfo.objects.all().first()
+        src = MySerializer(instance=user_list, many=False)
+        return Response(src.data)
+局部应用
+    在视图类下
+    from rest_framework.renderers import JSONRenderer,HTMLFormRenderer,AdminRenderer,BrowsableAPIRenderer
+    renderer_classes = [JSONRenderer，BrowsableAPIRenderer]
+
+全局配置：
+REST_FRAMEWORK = {
+    'DEFAULT_RENDERER_CLASSES': (
+            'rest_framework.renderers.JSONRenderer',
+            'rest_framework.renderers.BrowsableAPIRenderer',
+        )
+}
+
 # ----------- restful version -----------#
-# ----------- restful version -----------#
-# ----------- restful version -----------#
-# ----------- restful version -----------#
-# ----------- restful version -----------#
-# ----------- restful version -----------#
-# ----------- restful version -----------#
-# ----------- restful version -----------#
+

@@ -1,0 +1,213 @@
+# # -------------- 序列化一，serializers.Serializer，手动写所需字段 手动挡--------------
+# from rest_framework.views import APIView
+# from rest_framework.response import Response
+# from rest_framework import serializers
+# from . import models
+#
+#
+# class Validation(object):
+#     def __init__(self, base):
+#         self.base = base
+#
+#     def __call__(self, value, *args, **kwargs):
+#         if value != self.base:
+#             messages = "值必须是%s" % self.base
+#             raise serializers.ValidationError(messages)
+#
+# class MySerializer(serializers.Serializer):
+#     user = serializers.CharField()  # 还可以重写这个字段，如果这个重名的话，也可以增加一个字段
+#     pwd = serializers.CharField(validators=[Validation(base='666')])
+#     user_type_id = serializers.IntegerField()
+#     # 跨表的关键字是source
+#     # required表示是否可以为空
+#     ug = serializers.CharField(source='ug.title', required=False)
+#
+#
+# class UserIndex(APIView):
+#     """
+#
+#     """
+#
+#     def get(self, request, *args, **kwargs):
+#         self.dispatch
+#         # user_list = models.UserInfo.objects.all()
+#         # src = MySerializer(instance=user_list, many=True)
+#         user_list = models.UserInfo.objects.all().first()
+#         src = MySerializer(instance=user_list, many=False)
+#
+#         return Response(src.data)
+#
+#     def post(self, request, *args, **kwargs):
+#         src = MySerializer(data=request.data)
+#         if src.is_valid():
+#             print(src.validated_data)
+#             return Response(src.validated_data)
+#         else:
+#             print(src.errors)
+#             return Response(src.errors)
+#
+#
+# class GroupViews(APIView):
+#
+#     def get(self, request, *args, **kwargs):
+#         return Response('GroupViews')
+
+
+
+
+
+# -------------- 序列化二，serializers.ModelSerializer， 字段框架给写好了 自动挡--------------
+# from rest_framework.views import APIView
+# from rest_framework.response import Response
+# from rest_framework import serializers
+# from . import models
+#
+#
+# class Validation(object):
+#     def __init__(self, base):
+#         self.base = base
+#
+#     def __call__(self, value, *args, **kwargs):
+#         if value != self.base:
+#             messages = "值必须是%s" % self.base
+#             raise serializers.ValidationError(messages)
+#
+# class MySerializer(serializers.ModelSerializer):
+#     """
+#     反向生成url, view_name='xxxxxa'
+#     需要注意，
+#     class MySerializer(serializers.ModelSerializer):
+#         ug = serializers.HyperlinkedIdentityField(view_name='xxxxxa')  # 反向生成url，需要配合urls配合
+#         class Meta:
+#             model = models.UserInfo
+#             fields = "__all__"
+#         url(r'(?P<version>\w+)/users\.(?P<format>\w+)', views.UserIndex.as_view(), name='xx'),   通过这个url，生成下面的url
+#         url(r'(?P<version>\w+)/ug/(?P<pk>\d+)', views.UserIndex.as_view(), name='xxxxxa'),
+#     """
+#     user = serializers.CharField()
+#     pwd = serializers.CharField()
+#     # ug = serializers.HyperlinkedIdentityField(view_name='xxxxxa')  # 反向生成url，需要配合urls配合
+#     class Meta:
+#         model = models.UserInfo
+#         fields = "__all__"
+#         # 下面可以自定义一些规则
+#         extra_kwargs = {
+#             'user': {'min_length': 6},
+#             'pwd': {'validators': [Validation('6666')]}
+#         }
+#         """
+#         depth = 2
+#             "ug": {
+#             "id": 1,
+#             "title": "A组"
+#             }
+#         """
+#         depth = 2  # 跨表去查寻字段，最深达到十级
+#
+#
+# class UserIndex(APIView):
+#     """
+#
+#     """
+#
+#     def get(self, request, *args, **kwargs):
+#         self.dispatch
+#         # user_list = models.UserInfo.objects.all()
+#         # src = MySerializer(instance=user_list, many=True)
+#         user_list = models.UserInfo.objects.all().first()
+#         src = MySerializer(instance=user_list, many=False, context={'request': request})
+#
+#         return Response(src.data)
+#
+#     def post(self, request, *args, **kwargs):
+#         src = MySerializer(data=request.data, )
+#         if src.is_valid():
+#             # print(src.validated_data)
+#             return Response(src.validated_data)
+#         else:
+#             print(src.errors)
+#             return Response(src.errors)
+#
+#
+# class GroupViews(APIView):
+#
+#     def get(self, request, *args, **kwargs):
+#         return Response('GroupViews')
+
+
+#
+from rest_framework import serializers
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from . import models
+
+
+class MySerializer(serializers.HyperlinkedModelSerializer):
+    """
+    serializers.HyperlinkedModelSerializer:
+        这玩意儿主要是就是帮我们生成一个url字段
+        fields = ['id', 'user', 'pwd', 'url']
+
+        {
+            "id": 1,
+            "user": "egon",
+            "pwd": "123",
+            "url": "http://127.0.0.1:8881/v2/users/1"
+        }
+    """
+    class Meta:
+        model = models.UserInfo
+        fields = ['id', 'user', 'pwd', 'url']
+
+
+class UserIndex(APIView):
+    """
+
+    """
+
+    def get(self, request, *args, **kwargs):
+        self.dispatch
+        # user_list = models.UserInfo.objects.all()
+        # src = MySerializer(instance=user_list, many=True)
+        user_list = models.UserInfo.objects.all().first()
+        src = MySerializer(instance=user_list, many=False, context={'request': request})
+
+        return Response(src.data)
+
+    def post(self, request, *args, **kwargs):
+        src = MySerializer(data=request.data, )
+        if src.is_valid():
+            # print(src.validated_data)
+            return Response(src.validated_data)
+        else:
+            print(src.errors)
+            return Response(src.errors)
+class GroupViews(APIView):
+
+    def get(self, request, *args, **kwargs):
+        return Response('GroupViews')
+
+
+
+
+"""
+
+http://127.0.0.1:8881/v2/users/
+
+
+
+urlpatterns = [
+    url(r'admin/', admin.site.urls),
+    url(r'(?P<version>\w+)/users/', views.UserIndex.as_view(), name='xx'),
+    url(r'(?P<version>\w+)/users\.(?P<format>\w+)', views.UserIndex.as_view(), name='xx'),
+    # url(r'(?P<version>\w+)/ug/(?P<pk>\d+)', views.UserIndex.as_view(), name='xxxxxa'),  # serializers.ModelSerializer
+    url(r'(?P<version>\w+)/users/(?P<pk>\d+)', views.UserIndex.as_view(), name='userinfo-detail'), # serializers.HyperlinkedModelSerializer
+    # url(r'(?P<version>\w+)/login/', views.LoginView.as_view(), name='zz'),
+    url(r'(?P<version>\w+)/group/', views.GroupViews.as_view(), name='zzx'),
+    # url(r'index',views.index)
+]
+
+
+
+
+"""

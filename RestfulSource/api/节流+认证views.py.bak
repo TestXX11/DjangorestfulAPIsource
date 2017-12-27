@@ -1,0 +1,95 @@
+# -------------- throttle 扩展自定义限制访问频率 + 认证 --------------
+from rest_framework.views import APIView
+from rest_framework.response import Response
+# from api.dabo import throttle  # 关于throttle逻辑代码
+# from api.dabo.authentiction import AAAuthentication
+
+class UserIndex(APIView):
+
+    """
+    throttle_classes = [throttle.MyAnonymousRateThrottle, throttle.MyUserRateThrottle,]
+    单独可以这样写，也可以写到全局的settings里，代表每个视图都应用，如果有其中的视图不想应用，直接
+    throttle_classes = [] 等于一个空列表
+
+
+    关于配合认证代码， 如果单独应用，
+    class UserIndex(AAAuthentication,APIView): 继承AAAuthentication这个类就行了，
+    也可以写在全局settings里，那么这个类就无需继承AAAuthentication，如果某一个类不需要认证，也是来个空列表
+    authentication_classes = []
+
+    http://127.0.0.1:8881/v2/group/?tk=94a319949951e262833c27020cfefa9c
+    """
+
+
+    def get(self, request, *args, **kwargs):
+        self.dispatch
+
+        return Response('usersviews ok')
+
+
+class GroupViews(APIView):
+    """
+    throttle_classes = []
+    表示在全局应用下，此视图无节流限制
+    """
+    # throttle_classes = []
+    # authentication_classes = []
+    def get(self, request, *args, **kwargs):
+        return Response('GroupViews')
+
+# ---------------- throttle 局部应用 ----------------------
+
+# from rest_framework.views import APIView
+# from rest_framework.response import Response
+# from rest_framework.throttling import SimpleRateThrottle
+#
+# class MyRateThrottle(SimpleRateThrottle):
+#     """
+#     简单的自定义控制访问频率，许要settings配置文件配合生效，
+#     REST_FRAMEWORK = {
+#
+#     #  版本信息
+#     "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.URLPathVersioning",  # 全局配置
+#     "VERSION_PARAM": "version",  # 参数，这个version要是改掉，其他的都要改
+#     "DEFAULT_VERSION": "v1",   # 默认版本
+#     "ALLOWED_VERSIONS": ['v1', 'v2'],  # 允许哪些版本通过
+#     # 全局认证信息
+#     # "UNAUTHENTICATED_TOKEN": None,
+#     # "UNAUTHENTICATED_USER": None,
+#     # "DEFAULT_AUTHENTICATION_CLASSES": [
+#     #     "api.dabo.bo.CustomAuthentication",
+#     # ],
+#     # 全局权限应用
+#     # "DEFAULT_PERMISSION_CLASSES": [
+#     #     "api.dabo.mypermission.MyPermission",  # 写上路径
+#     # ]
+#     # 设置访问频率
+#     "DEFAULT_THROTTLE_RATES": {
+#         "anon": "5/m",
+#     }
+#
+# }
+#     """
+#     scope = 'anon'
+#
+#     def get_cache_key(self, request, view):
+#         # print(self.scope)
+#
+#         return self.cache_format % {
+#             'scope': self.scope,
+#             'ident': self.get_ident(request),
+#         }
+#
+# class UserIndex(APIView):
+#     throttle_classes = [MyRateThrottle, ]
+#
+#     def get(self, request, *args, **kwargs):
+#         self.dispatch
+#
+#         return Response('usersviews ok')
+#
+#
+# class GroupViews(APIView):
+#
+#     def get(self, request, *args, **kwargs):
+#         return Response('GroupViews')

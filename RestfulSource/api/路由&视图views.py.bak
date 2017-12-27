@@ -1,0 +1,247 @@
+
+# --------------- 手动挡路由---------------
+
+# from rest_framework import serializers
+# from rest_framework.views import APIView
+# from rest_framework.response import Response
+# from rest_framework.pagination import LimitOffsetPagination
+# from . import models
+#
+#
+# class MySerializer(serializers.ModelSerializer):
+#     # zhangkai = serializers.CharField(source='ug.title')  # 自定义字段
+#     class Meta:
+#         model = models.UserInfo
+#         fields = "__all__"
+#
+#
+# class MyPagination(LimitOffsetPagination):
+#     """
+#     实现分页类，在此类里面定义分页相关参数
+#     http://127.0.0.1:8881/v2/users/?limit=1&offset=1&page=1
+#     """
+#     # 默认每页显示的数据条数
+#     default_limit = 2
+#     # URL中传入的显示数据条数的参数
+#     limit_query_param = 'limit'
+#     # URL中传入的数据位置的参数
+#     offset_query_param = 'offset'
+#     # 最大每页显得条数
+#     max_limit = None
+#
+# class UserIndex(APIView):
+#     """
+#         视图不变，主要是url变了
+#         urlpatterns = [
+#             url(r'admin/', admin.site.urls),
+#             # 手动档，手动写这么些个url， name参数可不带
+#             url(r'(?P<version>\w+)/users/$', views.UserIndex.as_view(), name='xx'),
+#             url(r'(?P<version>\w+)/users\.(?P<format>\w+)/$', views.UserIndex.as_view(), name='xx'),
+#             url(r'(?P<version>\w+)/users/(?P<pk>\d+)/$', views.UserIndex.as_view(), name='xxa'),
+#             url(r'(?P<version>\w+)/users\.(?P<format>\w+)/(?P<pk>\d+)/$', views.UserIndex.as_view(), name='xx'),
+#         ]
+#     """
+#     def get(self, request, pk, *args, **kwargs):
+#         """
+#             http://127.0.0.1:8881/v2/users/1/
+#             http://127.0.0.1:8881/v2/users.json/1/
+#         """
+#         # pk = kwargs.get('pk')  # 这样的话，就不用单独传pk参数了
+#         if pk:
+#             user = models.UserInfo.objects.filter(pk=pk).first()
+#             src = MySerializer(instance=user, many=False)
+#             return Response(src.data)
+#         else:
+#             user_list = models.UserInfo.objects.all()
+#             # 想用的时候，先实例化类，在执行paginate_queryset方法
+#             page_obj = MyPagination()
+#             page_user_list = page_obj.paginate_queryset(user_list, request, self)
+#             src = MySerializer(instance=page_user_list, many=True, )
+#             response = page_obj.get_paginated_response(src.data)
+#             return response  # 这样写的话，会显示上一页下一页的url
+
+
+
+
+# -------------- 路由，GenericAPIView 这算半手动吧 ---------
+# from rest_framework import serializers
+# from rest_framework.generics import GenericAPIView
+# from rest_framework.response import Response
+# from rest_framework.pagination import LimitOffsetPagination
+# from . import models
+#
+#
+# class MySerializer(serializers.ModelSerializer):
+#     # zhangkai = serializers.CharField(source='ug.title')  # 自定义字段
+#     class Meta:
+#         model = models.UserInfo
+#         fields = "__all__"
+#
+#
+# class MyPagination(LimitOffsetPagination):
+#     """
+#     实现分页类，在此类里面定义分页相关参数
+#     http://127.0.0.1:8881/v2/users/?limit=1&offset=1&page=1
+#     """
+#     # 默认每页显示的数据条数
+#     default_limit = 2
+#     # URL中传入的显示数据条数的参数
+#     limit_query_param = 'limit'
+#     # URL中传入的数据位置的参数
+#     offset_query_param = 'offset'
+#     # 最大每页显得条数
+#     max_limit = None
+#
+# class UserIndex(GenericAPIView):
+#     """
+#         urlpatterns = [
+#             url(r'admin/', admin.site.urls),
+#             # 手动档，手动写这么些个url， name参数可不带
+#             url(r'(?P<version>\w+)/users/$', views.UserIndex.as_view(), name='xx'),
+#             url(r'(?P<version>\w+)/users\.(?P<format>\w+)/$', views.UserIndex.as_view(), name='xx'),
+#             url(r'(?P<version>\w+)/users/(?P<pk>\d+)/$', views.UserIndex.as_view(), name='xxa'),
+#             url(r'(?P<version>\w+)/users\.(?P<format>\w+)/(?P<pk>\d+)/$', views.UserIndex.as_view(), name='xx'),
+#         ]
+#     """
+#     queryset = models.UserInfo.objects.all()
+#     serializer_class = MySerializer
+#     pagination_class = MyPagination
+#     def get(self, request, *args, **kwargs):
+#         """
+#         其实这么用没意思，一般不这么用，因为，路由没变，只是在视图里做了写改变
+#         """
+#         # 去数据取数据
+#         user_list = self.get_queryset()
+#         # 分页
+#         page_user_list = self.paginate_queryset(user_list)
+#         # 序列化，用的我们自己的 serializer_class = MySerializer
+#         src = self.get_serializer(instance=page_user_list, many=True)
+#         response = self.get_paginated_response(src.data)
+#         return response
+
+
+# --------- 路由 继承GenericViewSet 半自动 -----------
+
+
+# from rest_framework import serializers
+# from rest_framework.viewsets import GenericViewSet
+# from rest_framework.response import Response
+# from rest_framework.pagination import LimitOffsetPagination
+# from . import models
+#
+# class MySerializer(serializers.ModelSerializer):
+#     # zhangkai = serializers.CharField(source='ug.title')  # 自定义字段
+#     class Meta:
+#         model = models.UserInfo
+#         fields = "__all__"
+#
+# class MyPagination(LimitOffsetPagination):
+#     """
+#     实现分页类，在此类里面定义分页相关参数
+#     http://127.0.0.1:8881/v2/users/?limit=1&offset=1&page=1
+#     """
+#     # 默认每页显示的数据条数
+#     default_limit = 2
+#     # URL中传入的显示数据条数的参数
+#     limit_query_param = 'limit'
+#     # URL中传入的数据位置的参数
+#     offset_query_param = 'offset'
+#     # 最大每页显得条数
+#     max_limit = None
+#
+# class UserIndex(GenericViewSet):
+#     """
+#     半自动:继承GenericViewSet：
+#         必须手动实现相应的方法和功能代码
+#         get: list  # 查看所有的
+#         get: retrieve # 这是查看一个对象
+#         post: create
+#         put: update
+#         delete: destroy
+#     urls需这样写
+#         urlpatterns = [
+#             url(r'admin/', admin.site.urls),
+#             # 半自动
+#             url(r'(?P<version>\w+)/users/$', views.UserIndex.as_view({'get': 'list', 'post': 'create'}), name='xx'),
+#             url(r'(?P<version>\w+)/users/(?P<pk>\d+)/$', views.UserIndex.as_view({'get': 'retrieve', 'put': 'update', 'delete': 'destroy'}), name='xxa'),
+#
+#         ]
+#     """
+#     queryset = models.UserInfo.objects.all()
+#     serializer_class = MySerializer
+#     pagination_class = MyPagination
+#     def list(self, request, *args, **kwargs):
+#         # 去数据取数据
+#         user_list = self.get_queryset()
+#         # 分页
+#         page_user_list = self.paginate_queryset(user_list)
+#         # 序列化，用的我们自己的 serializer_class = MySerializer
+#         src = self.get_serializer(instance=page_user_list, many=True)
+#         response = self.get_paginated_response(src.data)
+#         return response
+#
+#     def create(self, request, *args, **kwargs):
+#         return Response('create方法')
+#
+#     def update(self, request, *args, **kwargs):
+#         return Response("update方法")
+#
+#     def destroy(self, request, *args, **kwargs):
+#         return Response("destroy方法")
+
+
+# ------------------- 全自动   -------------------
+
+from rest_framework import serializers
+from rest_framework.viewsets import ModelViewSet
+from . import models
+
+class MySerializer(serializers.ModelSerializer):
+    # zhangkai = serializers.CharField(source='ug.title')  # 自定义字段
+    class Meta:
+        model = models.UserInfo
+        fields = "__all__"
+
+class UserIndex(ModelViewSet):
+    """
+    如果用全自动的，首先，urls必须导入defaultrouter类，并实例化对象
+        from django.conf.urls import url,include
+        from api import views
+        # 1 引入类
+        from rest_framework.routers import DefaultRouter
+        # 2 实例化对象
+        route = DefaultRouter()
+        # 3 调用register方法
+        route.register('user',views.UserIndex)
+
+        urlpatterns = [
+            # 自动挡
+            url(r'^(?P<version>\w+)/', include(route.urls))
+            # 不用版本的话，可以把版本的去掉
+            # url(r'^', include(route.urls))
+        ]
+    然后，自己实现序列化
+    视图类继承 ModelViewSet
+    from rest_framework.viewsets import ModelViewSet
+
+    这样下来，就可以实现增删改查了
+    http://127.0.0.1:8881/v2/user/  # 增，查
+    http://127.0.0.1:8881/v2/user/1  # 删，改
+    """
+    queryset = models.UserInfo.objects.all()
+    serializer_class = MySerializer
+"""
+ModelViewSet的继承关系
+
+                        View
+
+                      APIView
+
+ViewSetMixin      GenericAPIView
+
+        GenericViewSet              CreateModelMixin,RetrieveModelMixin,UpdateModelMixin,DestroyModelMixin,ListModelMixin,
+
+         ModelViewSet
+
+          UserIndex
+"""

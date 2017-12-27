@@ -1,0 +1,267 @@
+from django.shortcuts import render, HttpResponse
+
+
+
+
+# ----------------- 响应头设置和basic验证 ---------------
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.authentication import BasicAuthentication
+from . import models
+from rest_framework import exceptions
+from django.http import JsonResponse
+
+class CustomAuthentication(BasicAuthentication):
+    """
+    基于token的自定义认证
+    """
+
+    def authenticate(self, request):
+        tk = request.query_params.get('tk')
+        token_obj = models.Token.objects.filter(token=tk).first()
+        if token_obj:
+            return (token_obj.user, token_obj)
+        raise exceptions.AuthenticationFailed('认证失败')
+
+    def authenticate_header(self, request):
+        # return 'Basic realm=AAAA'
+        pass
+
+
+class AAAuthentication(object):
+    """
+    这个类，如果有多个视图需要认证，就多继承这个类，优先继承这个类，才存在的，如果写到settings里，那就是全局的引用，所有的视图都要校验
+    根据情况不同，可以自行更改
+    """
+    authentication_classes = [CustomAuthentication]
+
+    def gen_token(self, user):
+        """
+        这个函数写这类里面纯属闲的蛋疼，都是类，搞个函数，影响心情，就加这个类里了，如果有后续视图需要hash，也可以用
+        :param user: 传递用户名，别处用，也无所谓
+        :return: 用户名+当前时间的hash值
+        """
+        import hashlib
+        import time
+        hash = hashlib.md5(user.encode('utf-8'))
+        hash.update(str(time.time()).encode('utf-8'))
+        return hash.hexdigest()
+
+class LoginView(APIView):
+
+    ret = {'code': 1000, 'msg': None}
+    def get(self, request, *args, **kwargs):
+
+        return Response('登陆页面')
+    def post(self, request, *args, **kwargs):
+        """
+        :param request: 登陆页面，带着用户名和密码来校验
+        :param args:
+        :param kwargs:
+        :return:
+            code:1000 认证失败，这个可根据需求自定义
+                ：1001 认证成功
+            token:认证成功返回token
+        """
+        user = request.data.get('user')
+        pwd = request.data.get('pwd')
+        print(user,pwd)
+        user_obj = models.UserInfo.objects.filter(user=user,pwd=pwd).first()
+        if user_obj:
+            tk = AAAuthentication().gen_token(user)
+            # user=user:当作条件去查找更新
+            models.Token.objects.update_or_create(user=user_obj, defaults={'token': tk})
+            self.ret['code'] = 1001
+            self.ret['token'] = tk
+            self.ret['msg'] = '认证成功，老铁'
+            return JsonResponse(self.ret)
+        else:
+            self.ret['code'] = 1000
+            self.ret['msg'] = '扎心了，老铁，认证失败'
+            return JsonResponse(self.ret)
+
+class UserIndex(AAAuthentication, APIView):
+
+    def get(self, request, *args, **kwargs):
+        """
+
+        :param request: 如果认证成功，那么，用户信息都在request.user里面
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        print(request.user.user)
+        # self.dispatch
+
+        return Response(8888)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ----------------- 扩展自定义基于token的认证 ---------------
+# from rest_framework.views import APIView
+# from rest_framework.response import Response
+# from rest_framework.authentication import SessionAuthentication
+# from . import models
+# from rest_framework import exceptions
+# from django.http import JsonResponse
+#
+# class CustomAuthentication(SessionAuthentication):
+#     """
+#     基于token的自定义认证
+#     """
+#
+#     def authenticate(self, request):
+#         tk = request.query_params.get('tk')
+#         token_obj = models.Token.objects.filter(token=tk).first()
+#         if token_obj:
+#             return (token_obj.user, token_obj)
+#         raise exceptions.AuthenticationFailed('认证失败')
+#
+#     def authenticate_header(self, request):
+#         pass
+#
+#
+#
+# class AAAuthentication(object):
+#     """
+#     这个类，如果有多个视图需要认证，就多继承这个类，优先继承这个类，才存在的，如果写到settings里，那就是全局的引用，所有的视图都要校验
+#     根据情况不同，可以自行更改
+#     """
+#     authentication_classes = [CustomAuthentication]
+#
+#     def gen_token(self, user):
+#         """
+#         这个函数写这类里面纯属闲的蛋疼，都是类，搞个函数，影响心情，就加这个类里了，如果有后续视图需要hash，也可以用
+#         :param user: 传递用户名，别处用，也无所谓
+#         :return: 用户名+当前时间的hash值
+#         """
+#         import hashlib
+#         import time
+#         hash = hashlib.md5(user.encode('utf-8'))
+#         hash.update(str(time.time()).encode('utf-8'))
+#         return hash.hexdigest()
+#
+# class LoginView(APIView):
+#
+#     ret = {'code': 1000, 'msg': None}
+#     def get(self, request, *args, **kwargs):
+#
+#         return Response('登陆页面')
+#     def post(self, request, *args, **kwargs):
+#         """
+#         :param request: 登陆页面，带着用户名和密码来校验
+#         :param args:
+#         :param kwargs:
+#         :return:
+#             code:1000 认证失败，这个可根据需求自定义
+#                 ：1001 认证成功
+#             token:认证成功返回token
+#         """
+#         user = request.data.get('user')
+#         pwd = request.data.get('pwd')
+#         print(user,pwd)
+#         user_obj = models.UserInfo.objects.filter(user=user,pwd=pwd).first()
+#         if user_obj:
+#             tk = AAAuthentication().gen_token(user)
+#             # user=user:当作条件去查找更新
+#             models.Token.objects.update_or_create(user=user_obj, defaults={'token': tk})
+#             self.ret['code'] = 1001
+#             self.ret['token'] = tk
+#             self.ret['msg'] = '认证成功，老铁'
+#             return JsonResponse(self.ret)
+#         else:
+#             self.ret['code'] = 1000
+#             self.ret['msg'] = '扎心了，老铁，认证失败'
+#             return JsonResponse(self.ret)
+#
+# class UserIndex(AAAuthentication, APIView):
+#
+#     def get(self, request, *args, **kwargs):
+#         """
+#
+#         :param request: 如果认证成功，那么，用户信息都在request.user里面
+#         :param args:
+#         :param kwargs:
+#         :return:
+#         """
+#         print(request.user.user)
+#         # self.dispatch
+#
+#         return Response(8888)
+
+# ----------------- 全局认证 ---------------
+
+# from rest_framework.views import APIView
+# from rest_framework.response import Response
+#
+#
+# class UserIndex(APIView):
+#
+#     def get(self, request, *args, **kwargs):
+
+#         return Response(8888)
+#
+# class GroupViews(APIView):
+#
+#     def get(self, request):
+#
+#         return Response('group')
+# def index(request):
+#
+#     return HttpResponse('AAAA',)
+
+# # ----------------- 局部认证 ---------------
+#
+# from rest_framework.views import APIView
+# from rest_framework.response import Response
+# from rest_framework.authentication import SessionAuthentication
+#
+#
+#
+# class CustomAuthentication(SessionAuthentication):
+#     """
+#     自定义认证，必须集成源码的相对应的类，和方法
+#     """
+#
+#     def authenticate(self, request):
+#         # from rest_framework import exceptions
+#         return ('egon','123')
+#         # raise exceptions.AuthenticationFailed('自定义认证信息')
+#
+#
+#     def authenticate_header(self, request):
+#         pass
+#
+#
+# class UserIndex(APIView):
+#    authentication_classes = [CustomAuthentication]
+#
+#     def get(self, request, *args, **kwargs):
+#         # [<class 'rest_framework.authentication.SessionAuthentication'>,
+#         #  <class 'rest_framework.authentication.BasicAuthentication'>]
+#         # print(self.authentication_classes)  # 默认认证
+#         print(request.user,request.auth)  # 默认为：AnonymousUser None
+#         self.dispatch
+#
+#         return Response(8888)
+#
+# class GroupViews(APIView):
+#     authentication_classes = [CustomAuthentication]
+#     def get(self, request):
+#
+#         return Response('group')

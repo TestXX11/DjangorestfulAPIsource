@@ -122,12 +122,40 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 # ------------------------- restful -----------------------------
-# 全局配置版本信息
+# 全局配置
 REST_FRAMEWORK = {
+
+    #  版本信息
     "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.URLPathVersioning",  # 全局配置
     "VERSION_PARAM": "version",  # 参数，这个version要是改掉，其他的都要改
     "DEFAULT_VERSION": "v1",   # 默认版本
-    "ALLOWED_VERSIONS": ['v1', 'v2'],  # 允许那些版本通过
+    "ALLOWED_VERSIONS": ['v1', 'v2'],  # 允许哪些版本通过
+    # 全局认证信息
+    # "UNAUTHENTICATED_TOKEN": None,
+    # "UNAUTHENTICATED_USER": None,
+    # "DEFAULT_AUTHENTICATION_CLASSES": [
+    #     "api.dabo.bo.CustomAuthentication",
+    # ],
+    # 全局权限应用
+    # "DEFAULT_PERMISSION_CLASSES": [
+    #     "api.dabo.mypermission.MyPermission",  # 写上路径
+    # ],
+    # 全局节流配置
+    # "DEFAULT_THROTTLE_CLASSES": [
+    #     "api.dabo.throttle.MyAnonymousRateThrottle",
+    #     "api.dabo.throttle.MyUserRateThrottle",
+    # ],
+    # 访问频率设置
+    # "DEFAULT_THROTTLE_RATES": {
+    #     "anon": "7/m",
+    #     "anonymous_user": "3/m",
+    #     "login_user": "5/m",
+    # }
+    # 渲染 全局配置
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+    )
 }
 
 

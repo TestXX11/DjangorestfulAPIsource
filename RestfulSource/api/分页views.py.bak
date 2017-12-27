@@ -1,0 +1,232 @@
+
+
+
+
+# --------------- 位置 PageNumberPagination，---------------
+# from rest_framework import serializers
+# from rest_framework.views import APIView
+# from rest_framework.response import Response
+# from rest_framework.pagination import PageNumberPagination
+# from . import models
+#
+#
+# class MySerializer(serializers.ModelSerializer):
+#     # zhangkai = serializers.CharField(source='ug.title')  # 自定义字段
+#     class Meta:
+#         model = models.UserInfo
+#         fields = "__all__"
+#
+#
+# class MyPagination(PageNumberPagination):
+#     """
+#     实现分页类，在此类里面定义分页相关参数
+#     """
+#     # 默认一夜显示条数
+#     page_size = 1
+#     # 第几页
+#     page_query_param = 'page'
+#     # 定制一页显示条数
+#     page_size_query_param = 'page_size'
+#
+# class UserIndex(APIView):
+#
+#     def get(self, request, *args, **kwargs):
+#         """
+#           http://127.0.0.1:8881/v2/users/?page=1
+#         """
+#
+#         # user_list = models.UserInfo.objects.all()[0:2]  # 切片来分页
+#
+#         user_list = models.UserInfo.objects.all()
+#         # 想用的时候，先实例化类，在执行paginate_queryset方法
+#         page_obj = MyPagination()
+#         page_user_list = page_obj.paginate_queryset(user_list, request, self)
+#
+#         src = MySerializer(instance=page_user_list, many=True, )
+#
+#         """
+#             上面代码不变
+#             response = page_obj.get_paginated_response(src.data)
+#             return response   # 这样写的话，会显示上一页下一页的url
+#
+#         """
+#         return Response(src.data)  # 只是返回分页数据
+#
+#
+#     def post(self, request, *args, **kwargs):
+#         src = MySerializer(data=request.data, )
+#         if src.is_valid():
+#             # print(src.validated_data)
+#             return Response(src.validated_data)
+#         else:
+#             print(src.errors)
+#             return Response(src.errors)
+# class GroupViews(APIView):
+#
+#     def get(self, request, *args, **kwargs):
+#         self.dispatch
+#         return Response('GroupViews')
+
+"""
+urlpatterns = [
+    url(r'admin/', admin.site.urls),
+    url(r'(?P<version>\w+)/users/', views.UserIndex.as_view(), name='xx'),
+    url(r'(?P<version>\w+)/users\.(?P<format>\w+)', views.UserIndex.as_view(), name='xx'),
+    # url(r'(?P<version>\w+)/ug/(?P<pk>\d+)', views.UserIndex.as_view(), name='xxxxxa'),  # serializers.ModelSerializer
+    url(r'(?P<version>\w+)/users/(?P<pk>\d+)', views.UserIndex.as_view(), name='userinfo-detail'), # serializers.HyperlinkedModelSerializer
+    # url(r'(?P<version>\w+)/login/', views.LoginView.as_view(), name='zz'),
+    url(r'(?P<version>\w+)/group/', views.GroupViews.as_view(), name='zzx'),
+    # url(r'index',views.index)
+]
+"""
+
+# --------------- 个数，CursorPagination，---------------
+
+from rest_framework import serializers
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.pagination import LimitOffsetPagination
+from . import models
+
+
+class MySerializer(serializers.ModelSerializer):
+    # zhangkai = serializers.CharField(source='ug.title')  # 自定义字段
+    class Meta:
+        model = models.UserInfo
+        fields = "__all__"
+
+
+class MyPagination(LimitOffsetPagination):
+    """
+    实现分页类，在此类里面定义分页相关参数
+
+
+    http://127.0.0.1:8881/v2/users/?limit=1&offset=1&page=1
+    """
+    # 默认每页显示的数据条数
+    default_limit = 1
+    # URL中传入的显示数据条数的参数
+    limit_query_param = 'limit'
+    # URL中传入的数据位置的参数
+    offset_query_param = 'offset'
+    # 最大每页显得条数
+    max_limit = None
+
+class UserIndex(APIView):
+
+    def get(self, request, *args, **kwargs):
+        """
+          http://127.0.0.1:8881/v2/users/?page=1
+        """
+
+        # user_list = models.UserInfo.objects.all()[0:2]  # 切片来分页
+
+        user_list = models.UserInfo.objects.all()
+        # 想用的时候，先实例化类，在执行paginate_queryset方法
+        page_obj = MyPagination()
+        page_user_list = page_obj.paginate_queryset(user_list, request, self)
+
+        src = MySerializer(instance=page_user_list, many=True, )
+
+        response = page_obj.get_paginated_response(src.data)
+        return response  # 这样写的话，会显示上一页下一页的url
+
+
+
+    def post(self, request, *args, **kwargs):
+        src = MySerializer(data=request.data, )
+        if src.is_valid():
+            # print(src.validated_data)
+            return Response(src.validated_data)
+        else:
+            print(src.errors)
+            return Response(src.errors)
+class GroupViews(APIView):
+
+    def get(self, request, *args, **kwargs):
+        self.dispatch
+        return Response('GroupViews')
+
+
+
+
+# --------------- 游标，CursorPagination，---------------
+#
+# from rest_framework import serializers
+# from rest_framework.views import APIView
+# from rest_framework.response import Response
+# from rest_framework.pagination import CursorPagination
+# from . import models
+#
+#
+# class MySerializer(serializers.ModelSerializer):
+#     # zhangkai = serializers.CharField(source='ug.title')  # 自定义字段
+#     class Meta:
+#         model = models.UserInfo
+#         fields = "__all__"
+#
+#
+# class MyPagination(CursorPagination):
+#     """
+#     实现分页类，在此类里面定义分页相关参数
+#     """
+#     # URL传入的游标参数
+#     cursor_query_param = 1
+#     # 默认每页显示的数据条数
+#     page_size = 1
+#     # 定制一页显示条数
+#     page_size_query_param = 'page_size'
+#     # 每页显示数据最大条数
+#     max_page_size = 20
+#     # 根据id从打到小排列
+#     ordering = 'id'
+#
+# class UserIndex(APIView):
+#
+#     def get(self, request, *args, **kwargs):
+#         """
+#           http://127.0.0.1:8881/v2/users/?page=1
+#         """
+#
+#         # user_list = models.UserInfo.objects.all()[0:2]  # 切片来分页
+#
+#         user_list = models.UserInfo.objects.all()
+#         # 想用的时候，先实例化类，在执行paginate_queryset方法
+#         page_obj = MyPagination()
+#         page_user_list = page_obj.paginate_queryset(user_list, request, self)
+#
+#         src = MySerializer(instance=page_user_list, many=True, )
+#
+#         response = page_obj.get_paginated_response(src.data)
+#         return response  # 这样写的话，会显示上一页下一页的url
+#
+#
+#
+#     def post(self, request, *args, **kwargs):
+#         src = MySerializer(data=request.data, )
+#         if src.is_valid():
+#             # print(src.validated_data)
+#             return Response(src.validated_data)
+#         else:
+#             print(src.errors)
+#             return Response(src.errors)
+# class GroupViews(APIView):
+#
+#     def get(self, request, *args, **kwargs):
+#         self.dispatch
+#         return Response('GroupViews')
+
+
+"""
+urlpatterns = [
+    url(r'admin/', admin.site.urls),
+    url(r'(?P<version>\w+)/users/', views.UserIndex.as_view(), name='xx'),
+    url(r'(?P<version>\w+)/users\.(?P<format>\w+)', views.UserIndex.as_view(), name='xx'),
+    # url(r'(?P<version>\w+)/ug/(?P<pk>\d+)', views.UserIndex.as_view(), name='xxxxxa'),  # serializers.ModelSerializer
+    url(r'(?P<version>\w+)/users/(?P<pk>\d+)', views.UserIndex.as_view(), name='userinfo-detail'), # serializers.HyperlinkedModelSerializer
+    # url(r'(?P<version>\w+)/login/', views.LoginView.as_view(), name='zz'),
+    url(r'(?P<version>\w+)/group/', views.GroupViews.as_view(), name='zzx'),
+    # url(r'index',views.index)
+]
+
+"""

@@ -1,0 +1,21 @@
+# -------------- parser 扩展自定义限制访问频率 + 认证 --------------
+from rest_framework.views import APIView
+from rest_framework.response import Response
+
+from rest_framework.parsers import JSONParser, FormParser
+class UserIndex(APIView):
+    """
+    from rest_framework.parsers import JSONParser
+    配置什么解析器，就只能处理这些类型的
+    """
+    parser_classes = [JSONParser, FormParser]  # 只能处理这两种类型的
+    def get(self, request, *args, **kwargs):
+        self.dispatch
+
+        return Response('usersviews ok')
+
+
+class GroupViews(APIView):
+
+    def get(self, request, *args, **kwargs):
+        return Response('GroupViews')

@@ -1,0 +1,76 @@
+# ----------- 全局应用 -----------
+# from rest_framework.views import APIView
+# from rest_framework.response import Response
+#
+#
+# class UserIndex(APIView):
+    """
+    权限代码在别处，这里权限的配置在settings里
+    REST_FRAMEWORK = {
+
+    #  版本信息
+    "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.URLPathVersioning",  # 全局配置
+    "VERSION_PARAM": "version",  # 参数，这个version要是改掉，其他的都要改
+    "DEFAULT_VERSION": "v1",   # 默认版本
+    "ALLOWED_VERSIONS": ['v1', 'v2'],  # 允许哪些版本通过
+    # 全局认证信息
+    "UNAUTHENTICATED_TOKEN": None,
+    "UNAUTHENTICATED_USER": None,
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "api.dabo.bo.CustomAuthentication",
+    ],
+    # 全局权限应用
+    # "DEFAULT_PERMISSION_CLASSES": [
+    #     "api.dabo.mypermission.MyPermission",  # 写上路径
+    # ],
+    }
+    """
+#
+#     def get(self, request, *args, **kwargs):
+#         self.dispatch
+#         return Response(8888)
+# class GroupViews(APIView):
+#
+#
+#     def get(self, request, *args, **kwargs):
+#
+#         return Response('GroupViews')
+
+
+
+
+
+
+
+
+# -------------- persission 局部应用 --------------
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import BasePermission
+
+
+class MyPermissions(BasePermission):
+    message = '无权限访问aaaa'  # 自定义错误信息
+    def has_permission(self, request, view):
+        """
+        最简单的应用
+        """
+        if isinstance(view,GroupViews) and request._request.method == 'POST':
+            return False
+        return True
+
+class UserIndex(APIView):
+    permission_classes = [MyPermissions]
+
+    def get(self, request, *args, **kwargs):
+
+        print(self.permission_classes)
+        return Response(8888)
+class GroupViews(APIView):
+    permission_classes = [MyPermissions]
+
+    def get(self, request, *args, **kwargs):
+
+        return Response('GroupViews')
+

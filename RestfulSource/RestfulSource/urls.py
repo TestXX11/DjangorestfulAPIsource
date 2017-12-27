@@ -15,8 +15,25 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.conf.urls import url
+
 from api import views
+
+
 urlpatterns = [
-    url(r'admin/', admin.site.urls),
-    url(r'(?P<version>\w+)/users/', views.UserIndex.as_view(),name='xx'),
+    # url(r'admin/', admin.site.urls),
+    # 手动档，手动写这么些个url， name参数可不带
+    # url(r'(?P<version>\w+)/users/$', views.UserIndex.as_view(), name='xx'),
+    # url(r'(?P<version>\w+)/users\.(?P<format>\w+)/$', views.UserIndex.as_view(), name='xx'),
+    # url(r'(?P<version>\w+)/users/(?P<pk>\d+)/$', views.UserIndex.as_view(), name='xxa'),
+    # url(r'(?P<version>\w+)/users\.(?P<format>\w+)/(?P<pk>\d+)/$', views.UserIndex.as_view(), name='xx'),
+    # 半自动
+    # url(r'(?P<version>\w+)/users/$', views.UserIndex.as_view({'get': 'list', 'post': 'create'}), name='xx'),
+    # url(r'(?P<version>\w+)/users/(?P<pk>\d+)/$', views.UserIndex.as_view({'get': 'retrieve', 'put': 'update', 'delete': 'destroy'}), name='xxa'),
+
+    # 自动挡
+    # url(r'^(?P<version>\w+)/', include(route.urls))
+
+    # 渲染
+    url(r'(?P<version>\w+)/users/$', views.UserIndex.as_view(), name='xx'),
+    url(r'(?P<version>\w+)/users\.(?P<format>[a-z0-9]+)', views.UserIndex.as_view(), name='xxx'),
 ]

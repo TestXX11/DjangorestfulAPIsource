@@ -223,7 +223,7 @@ urlpatterns = [
 最后，说下这个继承关系
 ModelViewSet的继承关系
 
-                        View
+                        View     # django的view类
 
                       APIView
 
@@ -231,7 +231,7 @@ ViewSetMixin      GenericAPIView
 
         GenericViewSet              CreateModelMixin,RetrieveModelMixin,UpdateModelMixin,DestroyModelMixin,ListModelMixin,
 
-         ModelViewSet
+         ModelViewSet   # 什么也没做，只是继承了上面几个类
 
           UserIndex
 
@@ -261,5 +261,5 @@ REST_FRAMEWORK = {
         )
 }
 
-# ----------- restful version -----------#
+
 
